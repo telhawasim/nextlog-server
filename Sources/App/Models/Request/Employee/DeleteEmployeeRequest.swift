@@ -14,7 +14,7 @@ struct DeleteEmployeeRequest: Content {
     
     //MARK: - VALIDATE -
     func validate() throws {
-        guard let _ = self.id else {
+        if (self.id == nil) {
             throw Abort(.badRequest, reason: "ID is required")
         }
     }

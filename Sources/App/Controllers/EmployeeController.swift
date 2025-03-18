@@ -89,6 +89,8 @@ extension EmployeeController {
     @Sendable private func deleteEmployee(req: Request) async throws -> BaseServer {
         /// Decode the request
         let deleteEmployeeRequest = try req.content.decode(DeleteEmployeeRequest.self)
+        /// Validate the request
+        try deleteEmployeeRequest.validate()
         /// Extract the user with the same id as request
         let existingEmployee = try await EmployeeModel.query(on: req.db)
             .filter(\.$id == deleteEmployeeRequest.id ?? ObjectId())
