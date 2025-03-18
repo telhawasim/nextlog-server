@@ -9,7 +9,7 @@ import Vapor
 import Fluent
 @preconcurrency import FluentMongoDriver
 
-final class DesignationModel: Model, @unchecked Sendable {
+final class DesignationModel: Model, Content, @unchecked Sendable {
     
     /// Schema
     static let schema: String = "designations"
