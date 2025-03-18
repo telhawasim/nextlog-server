@@ -86,10 +86,21 @@ extension EmployeeController {
     }
     
     //MARK: - DELETE EMPLOYEE -
-    @Sendable private func deleteEmployee(req: Request) throws -> String {
+    @Sendable private func deleteEmployee(req: Request) async throws -> BaseServer {
         /// Decode the request
         let deleteEmployeeRequest = try req.content.decode(DeleteEmployeeRequest.self)
-        return ""
+        /// Extract the user with the same id as request
+        let existingEmployee = try await EmployeeModel.query(on: req.db)
+            .filter(\.$id == deleteEmployeeRequest.id ?? ObjectId())
+            .first()
+        /// Check if there is no existing user for the provided id
+        if (existingEmployee == nil) {
+            return BaseServer(message: "Employee doesn't exist", status: .badRequest)
+        }
+        /// Delete the user from the database
+        try await existingEmployee?.delete(on: req.db)
+        /// Return
+        return BaseServer(message: "Employee has been deleted", status: .ok)
     }
     
     //MARK: - SAVE IMAGE FILE -
