@@ -17,6 +17,7 @@ struct EmployeeController: RouteCollection {
 
         employee.post("add", use: self.addEmployee)
         employee.get("getAll", use: self.getAllEmployees)
+        employee.delete("delete", use: self.deleteEmployee)
     }
 }
 
@@ -82,6 +83,13 @@ extension EmployeeController {
         }
         
         return GetAllEmployeeResponse(message: "Success", status: .ok, employees: response)
+    }
+    
+    //MARK: - DELETE EMPLOYEE -
+    @Sendable private func deleteEmployee(req: Request) throws -> String {
+        /// Decode the request
+        let deleteEmployeeRequest = try req.content.decode(DeleteEmployeeRequest.self)
+        return ""
     }
     
     //MARK: - SAVE IMAGE FILE -
