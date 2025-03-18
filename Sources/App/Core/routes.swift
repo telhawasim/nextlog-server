@@ -1,0 +1,7 @@
+import Vapor
+
+func routes(_ app: Application) throws {
+    try app.register(collection: AdminController())
+    try app.register(collection: DesignationController())
+    try app.register(collection: DepartmentController())
+}
