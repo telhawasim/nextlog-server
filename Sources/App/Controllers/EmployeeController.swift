@@ -8,17 +8,19 @@
 import Vapor
 import Fluent
 @preconcurrency import FluentMongoDriver
+import JWT
 
 struct EmployeeController: RouteCollection {
     
     //MARK: - BOOT -
     func boot(routes: any RoutesBuilder) throws {
         let employee = routes.grouped("employee")
+        let protected = employee.grouped(JWTMiddleware())
 
-        employee.post("add", use: self.addEmployee)
-        employee.get("getAll", use: self.getAllEmployees)
-        employee.get(":id", use: self.getSpecificEmployee)
-        employee.delete("delete", use: self.deleteEmployee)
+        protected.post("add", use: self.addEmployee)
+        protected.get("getAll", use: self.getAllEmployees)
+        protected.get(":id", use: self.getSpecificEmployee)
+        protected.delete("delete", use: self.deleteEmployee)
         employee.post("login", use: self.loginAsEmployee)
     }
 }
@@ -33,14 +35,14 @@ extension EmployeeController {
         /// Validate the request
         try formData.validate()
         /// Check designation exists in the database
-        guard let _ = try await DesignationModel.query(on: req.db)
+        guard let existingDesignation = try await DesignationModel.query(on: req.db)
             .filter(\.$id == formData.designation_id ?? ObjectId())
             .first()
         else {
             return BaseServer(message: "Designation does not exist", status: .badRequest)
         }
         /// Check department exists in the database
-        guard let _ = try await DepartmentModel.query(on: req.db)
+        guard let existingDepartment = try await DepartmentModel.query(on: req.db)
             .filter(\.$id == formData.department_id ?? ObjectId())
             .first()
         else {
@@ -55,8 +57,11 @@ extension EmployeeController {
             email: formData.email ?? "",
             emp_id: formData.emp_id ?? 0,
             avatar: imagePath,
-            designation: formData.designation_id ?? ObjectId(),
-            department: formData.department_id ?? ObjectId()
+            designation: existingDesignation.id ?? ObjectId(),
+            department: existingDepartment.id ?? ObjectId(),
+            dob: formData.dob ?? Date(),
+            phone: formData.phone ?? "",
+            date_of_joining: formData.date_of_joining ?? Date()
         )
         /// Save model in database
         try await employee.save(on: req.db)
@@ -82,10 +87,13 @@ extension EmployeeController {
                 id: employee.id,
                 designation: employee.designation,
                 department: employee.department,
-                avatarURL: avatarPath.isEmpty ? nil : avatarURL,
+                avatar: avatarPath.isEmpty ? nil : avatarURL,
                 created_at: employee.created_at,
                 updated_at: employee.updated_at,
-                emp_id: employee.emp_id
+                emp_id: employee.emp_id,
+                dob: employee.dob,
+                date_of_joining: employee.date_of_joining,
+                phone: employee.phone
             )
         }
         /// Response
@@ -119,10 +127,13 @@ extension EmployeeController {
                 id: employee.id,
                 designation: employee.designation,
                 department: employee.department,
-                avatarURL: avatarURL,
+                avatar: avatarURL,
                 created_at: employee.created_at,
                 updated_at: employee.updated_at,
-                emp_id: employee.emp_id
+                emp_id: employee.emp_id,
+                dob: employee.dob,
+                date_of_joining: employee.date_of_joining,
+                phone: employee.phone
             )
         )
     }
@@ -162,7 +173,7 @@ extension EmployeeController {
     }
     
     //MARK: - LOGIN AS EMPLOYEE -
-    @Sendable private func loginAsEmployee(req: Request) async throws -> String {
+    @Sendable private func loginAsEmployee(req: Request) async throws -> LoginEmployeeResponse {
         /// Decode the request
         let loginRequest = try req.content.decode(LoginEmployeeRequest.self)
         /// Validate the request
@@ -170,12 +181,44 @@ extension EmployeeController {
         /// Extract the existing employee from the database
         guard let existingEmployee = try await EmployeeModel.query(on: req.db)
             .filter(\.$email == loginRequest.email ?? "")
-            .filter(\.$emp_id == loginRequest.emp_id ?? 0)
+            .filter(\.$emp_id == loginRequest.id ?? 0)
+            .with(\.$designation)
+            .with(\.$department)
             .first()
         else {
             throw Abort(.badRequest, reason: "Employee not found")
         }
-        return ""
+        /// Generate JWT Token
+        let payload = JWTTokenPayload(
+            id: existingEmployee.id ?? ObjectId(),
+            isAdmin: true,
+            exp: ExpirationClaim(value: Date().addingTimeInterval(3600)) // 1 hour
+        )
+        /// Token into string
+        let token = try await req.jwt.sign(payload)
+        /// Handle the URL for the image
+        let avatarPath = existingEmployee.avatar.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let avatarURL = "http://127.0.0.1:8080/\(avatarPath)"
+        /// Return the response
+        return LoginEmployeeResponse(
+            message: "Success",
+            status: .ok,
+            access_token: token,
+            data: EmployeeResponse(
+                name: existingEmployee.name,
+                email: existingEmployee.email,
+                id: existingEmployee.id,
+                designation: existingEmployee.designation,
+                department: existingEmployee.department,
+                avatar: avatarURL,
+                created_at: existingEmployee.created_at,
+                updated_at: existingEmployee.updated_at,
+                emp_id: existingEmployee.emp_id,
+                dob: existingEmployee.dob,
+                date_of_joining: existingEmployee.date_of_joining,
+                phone: existingEmployee.phone
+            )
+        )
     }
     
     //MARK: - SAVE IMAGE FILE -

@@ -9,14 +9,14 @@ import Vapor
 
 struct LoginEmployeeRequest: Content {
     var email: String?
-    var emp_id: Int?
+    var id: Int?
     
     //MARK: - VALIDATE -
     func validate() throws {
         guard let email = self.email else {
             throw Abort(.badRequest, reason: "Email is required")
         }
-        guard let _ = self.emp_id else {
+        guard let _ = self.id else {
             throw Abort(.badRequest, reason: "Employee ID is required")
         }
         

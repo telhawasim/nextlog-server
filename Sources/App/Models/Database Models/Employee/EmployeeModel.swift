@@ -34,6 +34,14 @@ final class EmployeeModel: Model, Content, @unchecked Sendable {
     /// Department
     @Parent(key: "department")
     var department: DepartmentModel
+    /// Date of Birth
+    @Field(key: "dob")
+    var dob: Date
+    /// Phone
+    @Field(key: "phone")
+    var phone: String
+    @Field(key: "date_of_joining")
+    var date_of_joining: Date
     /// Created At
     @Field(key: "created_at")
     var created_at: Date
@@ -52,6 +60,9 @@ final class EmployeeModel: Model, Content, @unchecked Sendable {
         avatar: String,
         designation: ObjectId,
         department: ObjectId,
+        dob: Date,
+        phone: String,
+        date_of_joining: Date,
         created_at: Date = Date(),
         updated_at: Date = Date()
     ) {
@@ -62,6 +73,9 @@ final class EmployeeModel: Model, Content, @unchecked Sendable {
         self.avatar = avatar
         self.$designation.id = designation
         self.$department.id = department
+        self.dob = dob
+        self.phone = phone
+        self.date_of_joining = date_of_joining
         self.created_at = created_at
         self.updated_at = updated_at
     }

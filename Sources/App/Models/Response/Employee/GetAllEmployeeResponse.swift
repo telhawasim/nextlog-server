@@ -29,8 +29,11 @@ struct EmployeeResponse: Content {
     var id: ObjectId?
     var designation: DesignationModel?
     var department: DepartmentModel?
-    var avatarURL: String?
+    var avatar: String?
     var created_at: Date?
     var updated_at: Date?
     var emp_id: Int?
+    var dob: Date?
+    var date_of_joining: Date?
+    var phone: String?
 }
