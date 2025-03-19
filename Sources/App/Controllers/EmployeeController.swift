@@ -23,7 +23,6 @@ struct EmployeeController: RouteCollection {
         protected.get("getAll", use: self.getAllEmployees)
         protected.get(":id", use: self.getSpecificEmployee)
         protected.delete("delete", use: self.deleteEmployee)
-        protected.post("profile", "create", use: self.createProfile)
     }
 }
 
@@ -141,29 +140,30 @@ extension EmployeeController {
         /// Validate the request
         try deleteEmployeeRequest.validate()
         /// Extract the user with the same id as request
-        let existingEmployee = try await EmployeeModel.query(on: req.db)
+        guard let existingEmployee = try await EmployeeModel.query(on: req.db)
             .filter(\.$id == deleteEmployeeRequest.id ?? ObjectId())
+            .with(\.$profiles)
             .first()
-        /// Check if there is no existing user for the provided id
-        if (existingEmployee == nil) {
+        else {
             return BaseServer(message: "Employee doesn't exist", status: .badRequest)
         }
-        /// Delete the avatar image if it exists
-        if let avatarPath = existingEmployee?.avatar {
-            let filePath = req.application.directory.publicDirectory + avatarPath
-            let fileManager = FileManager.default
-            
-            if fileManager.fileExists(atPath: filePath) {
-                do {
-                    try fileManager.removeItem(atPath: filePath)
-                    req.logger.info("Deleted avatar file: \(filePath)")
-                } catch {
-                    req.logger.error("Failed to delete avatar file: \(error.localizedDescription)")
-                }
+        /// Delete the associated profiles with the employee
+        try await existingEmployee.$profiles.query(on: req.db)
+            .delete()
+        /// Make the avatar path
+        let filePath = req.application.directory.publicDirectory + existingEmployee.avatar
+        let fileManager = FileManager.default
+        /// Check whether image exists
+        if fileManager.fileExists(atPath: filePath) {
+            do {
+                try fileManager.removeItem(atPath: filePath)
+                req.logger.info("Deleted avatar file: \(filePath)")
+            } catch {
+                req.logger.error("Failed to delete avatar file: \(error.localizedDescription)")
             }
         }
         /// Delete the user from the database
-        try await existingEmployee?.delete(on: req.db)
+        try await existingEmployee.delete(on: req.db)
         /// Return
         return BaseServer(message: "Employee has been deleted", status: .ok)
     }
@@ -201,22 +201,6 @@ extension EmployeeController {
                 role: existingEmployee.role
             )
         )
-    }
-    
-    //MARK: - CREATE PROFILE -
-    @Sendable private func createProfile(req: Request) async throws -> BaseServer {
-        /// Decode the request
-        let createProfileRequest = try req.content.decode(CreateProfileRequest.self)
-        /// Extract the existing employee
-        guard let existingEmployee = try await EmployeeModel.find(createProfileRequest.employee_id ?? ObjectId(), on: req.db) else {
-            throw Abort(.notFound, reason: "Employee not found")
-        }
-        /// Make the object which needs to be added in database
-        let profile = ProfileModel(name: createProfileRequest.name ?? "", employeeID: try existingEmployee.requireID())
-        /// Add object in the database
-        try await profile.create(on: req.db)
-        /// Return the response
-        return BaseServer(message: "Profile created successfully", status: .ok)
     }
     
     //MARK: - SAVE IMAGE FILE -
