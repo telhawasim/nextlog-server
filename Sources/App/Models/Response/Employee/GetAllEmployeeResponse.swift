@@ -36,4 +36,5 @@ struct EmployeeResponse: Content {
     var dob: Date?
     var date_of_joining: Date?
     var phone: String?
+    var profiles: [GetProfileResponse]?
 }

@@ -48,6 +48,12 @@ final class EmployeeModel: Model, Content, @unchecked Sendable {
     /// Updated At
     @Field(key: "updated_at")
     var updated_at: Date
+    /// Profiles
+    @Children(for: \.$employee)
+    var profiles: [ProfileModel]
+    /// Role
+    @Field(key: "role")
+    var role: String
     
     init() { }
     
@@ -64,7 +70,8 @@ final class EmployeeModel: Model, Content, @unchecked Sendable {
         phone: String,
         date_of_joining: Date,
         created_at: Date = Date(),
-        updated_at: Date = Date()
+        updated_at: Date = Date(),
+        role: String = "employee"
     ) {
         self.id = id
         self.name = name
@@ -78,5 +85,6 @@ final class EmployeeModel: Model, Content, @unchecked Sendable {
         self.date_of_joining = date_of_joining
         self.created_at = created_at
         self.updated_at = updated_at
+        self.role = role
     }
 }

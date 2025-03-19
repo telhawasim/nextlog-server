@@ -17,11 +17,12 @@ struct EmployeeController: RouteCollection {
         let employee = routes.grouped("employee")
         let protected = employee.grouped(JWTMiddleware())
 
+        employee.post("login", use: self.loginAsEmployee)
         protected.post("add", use: self.addEmployee)
         protected.get("getAll", use: self.getAllEmployees)
         protected.get(":id", use: self.getSpecificEmployee)
         protected.delete("delete", use: self.deleteEmployee)
-        employee.post("login", use: self.loginAsEmployee)
+        protected.post("profile", "create", use: self.createProfile)
     }
 }
 
@@ -175,18 +176,16 @@ extension EmployeeController {
     //MARK: - LOGIN AS EMPLOYEE -
     @Sendable private func loginAsEmployee(req: Request) async throws -> LoginEmployeeResponse {
         /// Decode the request
-        let loginRequest = try req.content.decode(LoginEmployeeRequest.self)
+        let loginEmployeeRequest = try req.content.decode(LoginEmployeeRequest.self)
         /// Validate the request
-        try loginRequest.validate()
-        /// Extract the existing employee from the database
+        try loginEmployeeRequest.validate()
+        /// Extract the existing employee
         guard let existingEmployee = try await EmployeeModel.query(on: req.db)
-            .filter(\.$email == loginRequest.email ?? "")
-            .filter(\.$emp_id == loginRequest.id ?? 0)
-            .with(\.$designation)
-            .with(\.$department)
+            .filter(\.$email == loginEmployeeRequest.email ?? "")
+            .filter(\.$emp_id == loginEmployeeRequest.id ?? 0)
             .first()
         else {
-            throw Abort(.badRequest, reason: "Employee not found")
+            throw Abort(.notFound, reason: "Employee not found")
         }
         /// Generate JWT Token
         let payload = JWTTokenPayload(
@@ -196,29 +195,32 @@ extension EmployeeController {
         )
         /// Token into string
         let token = try await req.jwt.sign(payload)
-        /// Handle the URL for the image
-        let avatarPath = existingEmployee.avatar.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        let avatarURL = "http://127.0.0.1:8080/\(avatarPath)"
         /// Return the response
         return LoginEmployeeResponse(
             message: "Success",
             status: .ok,
-            access_token: token,
-            data: EmployeeResponse(
-                name: existingEmployee.name,
-                email: existingEmployee.email,
+            data: LoginEmployee(
                 id: existingEmployee.id,
-                designation: existingEmployee.designation,
-                department: existingEmployee.department,
-                avatar: avatarURL,
-                created_at: existingEmployee.created_at,
-                updated_at: existingEmployee.updated_at,
-                emp_id: existingEmployee.emp_id,
-                dob: existingEmployee.dob,
-                date_of_joining: existingEmployee.date_of_joining,
-                phone: existingEmployee.phone
+                name: existingEmployee.name,
+                role: existingEmployee.role
             )
         )
+    }
+    
+    //MARK: - CREATE PROFILE -
+    @Sendable private func createProfile(req: Request) async throws -> BaseServer {
+        /// Decode the request
+        let createProfileRequest = try req.content.decode(CreateProfileRequest.self)
+        /// Extract the existing employee
+        guard let existingEmployee = try await EmployeeModel.find(createProfileRequest.employee_id ?? ObjectId(), on: req.db) else {
+            throw Abort(.notFound, reason: "Employee not founda")
+        }
+        /// Make the object which needs to be added in database
+        let profile = ProfileModel(name: createProfileRequest.name ?? "", employeeID: try existingEmployee.requireID())
+        /// Add object in the database
+        try await profile.create(on: req.db)
+        /// Return the response
+        return BaseServer(message: "Profile created successfully", status: .ok)
     }
     
     //MARK: - SAVE IMAGE FILE -
@@ -243,4 +245,59 @@ extension EmployeeController {
 
         return "uploads/\(fileName)"
     }
+    
+//    //MARK: - LOGIN AS EMPLOYEE -
+//    @Sendable private func loginAsEmployee(req: Request) async throws -> LoginEmployeeResponse {
+//        /// Decode the request
+//        let loginRequest = try req.content.decode(LoginEmployeeRequest.self)
+//        /// Validate the request
+//        try loginRequest.validate()
+//        /// Extract the existing employee from the database
+//        guard let existingEmployee = try await EmployeeModel.query(on: req.db)
+//            .filter(\.$email == loginRequest.email ?? "")
+//            .filter(\.$emp_id == loginRequest.id ?? 0)
+//            .with(\.$designation)
+//            .with(\.$department)
+//            .with(\.$profiles)
+//            .first()
+//        else {
+//            throw Abort(.badRequest, reason: "Employee not found")
+//        }
+//        /// Generate JWT Token
+//        let payload = JWTTokenPayload(
+//            id: existingEmployee.id ?? ObjectId(),
+//            isAdmin: true,
+//            exp: ExpirationClaim(value: Date().addingTimeInterval(3600)) // 1 hour
+//        )
+//        /// Token into string
+//        let token = try await req.jwt.sign(payload)
+//        /// Extract the profile associated with the existing employee
+//        let profiles = existingEmployee.profiles.map { profile in
+//            GetProfileResponse(id: profile.id, name: profile.name)
+//        }
+//        /// Handle the URL for the image
+//        let avatarPath = existingEmployee.avatar.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+//        let avatarURL = "http://127.0.0.1:8080/\(avatarPath)"
+//        /// Return the response
+//        return LoginEmployeeResponse(
+//            message: "Success",
+//            status: .ok,
+//            access_token: token,
+//            data: EmployeeResponse(
+//                name: existingEmployee.name,
+//                email: existingEmployee.email,
+//                id: existingEmployee.id,
+//                designation: existingEmployee.designation,
+//                department: existingEmployee.department,
+//                avatar: avatarURL,
+//                created_at: existingEmployee.created_at,
+//                updated_at: existingEmployee.updated_at,
+//                emp_id: existingEmployee.emp_id,
+//                dob: existingEmployee.dob,
+//                date_of_joining: existingEmployee.date_of_joining,
+//                phone: existingEmployee.phone,
+//                profiles: profiles
+//            )
+//        )
+//    }
 }
