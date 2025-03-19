@@ -12,7 +12,7 @@ import Vapor
 struct GetAllEmployeeResponse: BaseServerModel {
     var message: String
     var status: HTTPStatus
-    var employees: [EmployeeResponse]?
+    var employees: [EmployeeListRowResponse]?
 }
 
 //MARK: - GetSpecificEmploeeResponse -
@@ -20,6 +20,15 @@ struct GetSpecificEmploeeResponse: Content {
     var message: String
     var status: HTTPStatus
     var employee: EmployeeResponse?
+}
+
+//MARK: - EmployeeListRowResponse -
+struct EmployeeListRowResponse: Content {
+    var id: ObjectId?
+    var name: String?
+    var designation: DesignationModel?
+    var email: String?
+    var avatar: String?
 }
 
 //MARK: - EmployeeResponse -

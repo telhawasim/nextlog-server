@@ -76,25 +76,19 @@ extension EmployeeController {
         let employees = try await EmployeeModel.query(on: req.db)
             .with(\.$designation)
             .with(\.$department)
+            .with(\.$profiles)
             .all()
         /// Making model for the desired response
         let response = employees.map { employee in
             let avatarPath = employee.avatar.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
             let avatarURL = "http://127.0.0.1:8080/\(avatarPath)"
 
-            return EmployeeResponse(
-                name: employee.name,
-                email: employee.email,
+            return EmployeeListRowResponse(
                 id: employee.id,
+                name: employee.name,
                 designation: employee.designation,
-                department: employee.department,
-                avatar: avatarPath.isEmpty ? nil : avatarURL,
-                created_at: employee.created_at,
-                updated_at: employee.updated_at,
-                emp_id: employee.emp_id,
-                dob: employee.dob,
-                date_of_joining: employee.date_of_joining,
-                phone: employee.phone
+                email: employee.email,
+                avatar: avatarURL
             )
         }
         /// Response
@@ -199,6 +193,7 @@ extension EmployeeController {
         return LoginEmployeeResponse(
             message: "Success",
             status: .ok,
+            access_token: token,
             data: LoginEmployee(
                 id: existingEmployee.id,
                 name: existingEmployee.name,
