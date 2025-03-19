@@ -16,8 +16,9 @@ struct EmployeeController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let employee = routes.grouped("employee")
         let protected = employee.grouped(JWTMiddleware())
-
+        /// Without JWT
         employee.post("login", use: self.loginAsEmployee)
+        /// With JWT
         protected.post("add", use: self.addEmployee)
         protected.get("getAll", use: self.getAllEmployees)
         protected.get(":id", use: self.getSpecificEmployee)
@@ -208,7 +209,7 @@ extension EmployeeController {
         let createProfileRequest = try req.content.decode(CreateProfileRequest.self)
         /// Extract the existing employee
         guard let existingEmployee = try await EmployeeModel.find(createProfileRequest.employee_id ?? ObjectId(), on: req.db) else {
-            throw Abort(.notFound, reason: "Employee not founda")
+            throw Abort(.notFound, reason: "Employee not found")
         }
         /// Make the object which needs to be added in database
         let profile = ProfileModel(name: createProfileRequest.name ?? "", employeeID: try existingEmployee.requireID())
