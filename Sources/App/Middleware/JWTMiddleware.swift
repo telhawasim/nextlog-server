@@ -17,11 +17,14 @@ struct JWTMiddleware: AsyncMiddleware {
         
         do {
             let payload = try await request.jwt.verify(token, as: JWTTokenPayload.self)
-            
             request.auth.login(payload)
             return try await next.respond(to: request)
+        } catch let error as Abort {
+            // Show the actual error if it's an Abort error
+            throw error
         } catch {
-            throw Abort(.unauthorized, reason: "Token verification failed")
+            // If any other unexpected error happens, return generic message
+            throw Abort(.unauthorized, reason: "Token verification failed: \(error.localizedDescription)")
         }
     }
 }
