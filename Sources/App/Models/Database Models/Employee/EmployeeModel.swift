@@ -35,11 +35,23 @@ final class EmployeeModel: Model, Content, @unchecked Sendable {
     /// Created At
     @Field(key: "created_at")
     var created_at: Date
+    /// Updated At
+    @Field(key: "updated_at")
+    var updated_at: Date
     
     init() { }
     
     /// Initializer 
-    init(id: ObjectId? = nil, name: String, email: String, avatar: String, designation: ObjectId, department: ObjectId, created_at: Date = Date()) {
+    init(
+        id: ObjectId? = nil,
+        name: String,
+        email: String,
+        avatar: String,
+        designation: ObjectId,
+        department: ObjectId,
+        created_at: Date = Date(),
+        updated_at: Date = Date()
+    ) {
         self.id = id
         self.name = name
         self.email = email
@@ -47,5 +59,6 @@ final class EmployeeModel: Model, Content, @unchecked Sendable {
         self.$designation.id = designation
         self.$department.id = department
         self.created_at = created_at
+        self.updated_at = updated_at
     }
 }

@@ -31,4 +31,5 @@ struct EmployeeResponse: Content {
     var department: DepartmentModel?
     var avatarURL: String?
     var created_at: Date?
+    var updated_at: Date?
 }

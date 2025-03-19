@@ -31,5 +31,15 @@ struct AddEmployeeRequest: Content {
         guard let departmentID = self.department_id else {
             throw Abort(.badRequest, reason: "Department ID is required")
         }
+        
+        if (name == "") {
+            throw Abort(.badRequest, reason: "Name cannot be empty")
+        } else if (email == "") {
+            throw Abort(.badRequest, reason: "Email cannot be empty")
+        } else if !(email.isValidEmail()) {
+            throw Abort(.badRequest, reason: "Email must be valid")
+        } else if (avatar.filename == "") {
+            throw Abort(.badRequest, reason: "Profile picture cannot be empty")
+        }
     }
 }

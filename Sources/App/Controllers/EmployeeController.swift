@@ -81,7 +81,8 @@ extension EmployeeController {
                 designation: employee.designation,
                 department: employee.department,
                 avatarURL: avatarPath.isEmpty ? nil : avatarURL,
-                created_at: employee.created_at
+                created_at: employee.created_at,
+                updated_at: employee.updated_at
             )
         }
         /// Response
@@ -116,7 +117,8 @@ extension EmployeeController {
                 designation: employee.designation,
                 department: employee.department,
                 avatarURL: avatarURL,
-                created_at: employee.created_at
+                created_at: employee.created_at,
+                updated_at: employee.updated_at
             )
         )
     }
