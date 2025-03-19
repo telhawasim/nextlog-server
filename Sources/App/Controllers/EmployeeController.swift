@@ -17,6 +17,7 @@ struct EmployeeController: RouteCollection {
 
         employee.post("add", use: self.addEmployee)
         employee.get("getAll", use: self.getAllEmployees)
+        employee.get(":id", use: self.getSpecificEmployee)
         employee.delete("delete", use: self.deleteEmployee)
     }
 }
@@ -63,11 +64,12 @@ extension EmployeeController {
     
     //MARK: - GET ALL EMPLOYEES -
     @Sendable private func getAllEmployees(req: Request) async throws -> GetAllEmployeeResponse {
+        /// Extracting all the employees
         let employees = try await EmployeeModel.query(on: req.db)
             .with(\.$designation)
             .with(\.$department)
             .all()
-        
+        /// Making model for the desired response
         let response = employees.map { employee in
             let avatarPath = employee.avatar.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
             let avatarURL = "http://127.0.0.1:8080/\(avatarPath)"
@@ -78,11 +80,45 @@ extension EmployeeController {
                 id: employee.id,
                 designation: employee.designation,
                 department: employee.department,
-                avatarURL: avatarPath.isEmpty ? nil : avatarURL
+                avatarURL: avatarPath.isEmpty ? nil : avatarURL,
+                created_at: employee.created_at
             )
         }
-        
+        /// Response
         return GetAllEmployeeResponse(message: "Success", status: .ok, employees: response)
+    }
+    
+    //MARK: - GET SPECIFIC EMPLOYEE -
+    @Sendable private func getSpecificEmployee(req: Request) async throws -> GetSpecificEmploeeResponse {
+        /// Decode the request to get the employee ID
+        guard let employeeID = req.parameters.get("id"), let objectID = ObjectId(employeeID) else {
+            throw Abort(.badRequest, reason: "Invalid employee ID")
+        }
+        /// Extract the employee from the database
+        guard let employee = try await EmployeeModel.query(on: req.db)
+            .filter(\.$id == objectID)
+            .with(\.$designation)
+            .with(\.$department)
+            .first() else {
+            throw Abort(.notFound, reason: "Employee not found")
+        }
+        /// Handle the URL for the image
+        let avatarPath = employee.avatar.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let avatarURL = "http://127.0.0.1:8080/\(avatarPath)"
+        /// Return the employee object
+        return GetSpecificEmploeeResponse(
+            message: "Success",
+            status: .ok,
+            employee: EmployeeResponse(
+                name: employee.name,
+                email: employee.email,
+                id: employee.id,
+                designation: employee.designation,
+                department: employee.department,
+                avatarURL: avatarURL,
+                created_at: employee.created_at
+            )
+        )
     }
     
     //MARK: - DELETE EMPLOYEE -
@@ -98,6 +134,20 @@ extension EmployeeController {
         /// Check if there is no existing user for the provided id
         if (existingEmployee == nil) {
             return BaseServer(message: "Employee doesn't exist", status: .badRequest)
+        }
+        /// Delete the avatar image if it exists
+        if let avatarPath = existingEmployee?.avatar {
+            let filePath = req.application.directory.publicDirectory + avatarPath
+            let fileManager = FileManager.default
+            
+            if fileManager.fileExists(atPath: filePath) {
+                do {
+                    try fileManager.removeItem(atPath: filePath)
+                    req.logger.info("Deleted avatar file: \(filePath)")
+                } catch {
+                    req.logger.error("Failed to delete avatar file: \(error.localizedDescription)")
+                }
+            }
         }
         /// Delete the user from the database
         try await existingEmployee?.delete(on: req.db)

@@ -26,22 +26,26 @@ final class EmployeeModel: Model, Content, @unchecked Sendable {
     /// Avatar
     @Field(key: "avatar")
     var avatar: String
-    
+    /// Designation
     @Parent(key: "designation")
     var designation: DesignationModel
-    
+    /// Department
     @Parent(key: "department")
     var department: DepartmentModel
+    /// Created At
+    @Field(key: "created_at")
+    var created_at: Date
     
     init() { }
     
     /// Initializer 
-    init(id: ObjectId? = nil, name: String, email: String, avatar: String, designation: ObjectId, department: ObjectId) {
+    init(id: ObjectId? = nil, name: String, email: String, avatar: String, designation: ObjectId, department: ObjectId, created_at: Date = Date()) {
         self.id = id
         self.name = name
         self.email = email
         self.avatar = avatar
         self.$designation.id = designation
         self.$department.id = department
+        self.created_at = created_at
     }
 }
