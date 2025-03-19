@@ -11,6 +11,7 @@ import Vapor
 struct AddEmployeeRequest: Content {
     var name: String?
     var email: String?
+    var emp_id: Int?
     var avatar: File?
     var designation_id: ObjectId?
     var department_id: ObjectId?
@@ -21,6 +22,9 @@ struct AddEmployeeRequest: Content {
         }
         guard let email = self.email else {
             throw Abort(.badRequest, reason: "Email is required")
+        }
+        guard let empID = self.emp_id else {
+            throw Abort(.badRequest, reason: "Employee ID is required")
         }
         guard let avatar = self.avatar else {
             throw Abort(.badRequest, reason: "Profile picture is required")

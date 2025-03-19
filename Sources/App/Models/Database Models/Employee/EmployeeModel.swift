@@ -24,6 +24,8 @@ final class EmployeeModel: Model, Content, @unchecked Sendable {
     @Field(key: "email")
     var email: String
     /// Avatar
+    @Field(key: "emp_id")
+    var emp_id: Int
     @Field(key: "avatar")
     var avatar: String
     /// Designation
@@ -46,6 +48,7 @@ final class EmployeeModel: Model, Content, @unchecked Sendable {
         id: ObjectId? = nil,
         name: String,
         email: String,
+        emp_id: Int,
         avatar: String,
         designation: ObjectId,
         department: ObjectId,
@@ -55,6 +58,7 @@ final class EmployeeModel: Model, Content, @unchecked Sendable {
         self.id = id
         self.name = name
         self.email = email
+        self.emp_id = emp_id
         self.avatar = avatar
         self.$designation.id = designation
         self.$department.id = department

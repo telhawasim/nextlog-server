@@ -19,6 +19,7 @@ struct EmployeeController: RouteCollection {
         employee.get("getAll", use: self.getAllEmployees)
         employee.get(":id", use: self.getSpecificEmployee)
         employee.delete("delete", use: self.deleteEmployee)
+        employee.post("login", use: self.loginAsEmployee)
     }
 }
 
@@ -52,6 +53,7 @@ extension EmployeeController {
             id: ObjectId(),
             name: formData.name ?? "",
             email: formData.email ?? "",
+            emp_id: formData.emp_id ?? 0,
             avatar: imagePath,
             designation: formData.designation_id ?? ObjectId(),
             department: formData.department_id ?? ObjectId()
@@ -82,7 +84,8 @@ extension EmployeeController {
                 department: employee.department,
                 avatarURL: avatarPath.isEmpty ? nil : avatarURL,
                 created_at: employee.created_at,
-                updated_at: employee.updated_at
+                updated_at: employee.updated_at,
+                emp_id: employee.emp_id
             )
         }
         /// Response
@@ -118,7 +121,8 @@ extension EmployeeController {
                 department: employee.department,
                 avatarURL: avatarURL,
                 created_at: employee.created_at,
-                updated_at: employee.updated_at
+                updated_at: employee.updated_at,
+                emp_id: employee.emp_id
             )
         )
     }
@@ -155,6 +159,23 @@ extension EmployeeController {
         try await existingEmployee?.delete(on: req.db)
         /// Return
         return BaseServer(message: "Employee has been deleted", status: .ok)
+    }
+    
+    //MARK: - LOGIN AS EMPLOYEE -
+    @Sendable private func loginAsEmployee(req: Request) async throws -> String {
+        /// Decode the request
+        let loginRequest = try req.content.decode(LoginEmployeeRequest.self)
+        /// Validate the request
+        try loginRequest.validate()
+        /// Extract the existing employee from the database
+        guard let existingEmployee = try await EmployeeModel.query(on: req.db)
+            .filter(\.$email == loginRequest.email ?? "")
+            .filter(\.$emp_id == loginRequest.emp_id ?? 0)
+            .first()
+        else {
+            throw Abort(.badRequest, reason: "Employee not found")
+        }
+        return ""
     }
     
     //MARK: - SAVE IMAGE FILE -

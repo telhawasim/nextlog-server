@@ -32,4 +32,5 @@ struct EmployeeResponse: Content {
     var avatarURL: String?
     var created_at: Date?
     var updated_at: Date?
+    var emp_id: Int?
 }
