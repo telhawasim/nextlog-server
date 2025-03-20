@@ -13,6 +13,10 @@ struct GetAllEmployeeResponse: BaseServerModel {
     var message: String
     var status: HTTPStatus
     var employees: [EmployeeListRowResponse]?
+    var current_page: Int?
+    var per_page: Int?
+    var total: Int?
+    var total_pages: Int?
 }
 
 //MARK: - GetSpecificEmploeeResponse -

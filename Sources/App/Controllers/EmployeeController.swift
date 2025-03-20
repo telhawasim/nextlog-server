@@ -20,9 +20,11 @@ struct EmployeeController: RouteCollection {
         employee.post("login", use: self.loginAsEmployee)
         /// With JWT
         protected.post("add", use: self.addEmployee)
-        protected.get("getAll", use: self.getAllEmployees)
         protected.get(":id", use: self.getSpecificEmployee)
         protected.delete("delete", use: self.deleteEmployee)
+        protected.get("getAll") { req async throws in
+            try await self.getAllEmployees(req: req)
+        }
     }
 }
 
@@ -72,17 +74,31 @@ extension EmployeeController {
     
     //MARK: - GET ALL EMPLOYEES -
     @Sendable private func getAllEmployees(req: Request) async throws -> GetAllEmployeeResponse {
-        /// Extracting all the employees
+        /// Extract query parameters (optional)
+        let page: Int = req.query[Int.self, at: "page"] ?? 1  // Default to page 1
+        let limit: Int = req.query[Int.self, at: "limit"] ?? 10 // Default limit 10
+        
+        /// Validate input (ensure page and limit are positive numbers)
+        guard page > 0, limit > 0 else {
+            throw Abort(.badRequest, reason: "Page and limit must be positive numbers")
+        }
+        
+        /// Extract total employee count
+        let totalEmployees = try await EmployeeModel.query(on: req.db).count()
+        
+        /// Fetch employees with pagination
         let employees = try await EmployeeModel.query(on: req.db)
             .with(\.$designation)
             .with(\.$department)
             .with(\.$profiles)
+            .range((page - 1) * limit..<(page * limit)) // Pagination logic
             .all()
-        /// Making model for the desired response
+        
+        /// Construct response model
         let response = employees.map { employee in
             let avatarPath = employee.avatar.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
             let avatarURL = "http://127.0.0.1:8080/\(avatarPath)"
-
+            
             return EmployeeListRowResponse(
                 id: employee.id,
                 name: employee.name,
@@ -92,7 +108,15 @@ extension EmployeeController {
             )
         }
         /// Response
-        return GetAllEmployeeResponse(message: "Success", status: .ok, employees: response)
+        return GetAllEmployeeResponse(
+            message: "Success",
+            status: .ok,
+            employees: response,
+            current_page: page,
+            per_page: limit,
+            total: totalEmployees,
+            total_pages: Int(ceil(Double(totalEmployees) / Double(limit)))
+        )
     }
     
     //MARK: - GET SPECIFIC EMPLOYEE -
