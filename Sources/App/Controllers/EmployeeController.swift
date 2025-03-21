@@ -20,11 +20,9 @@ struct EmployeeController: RouteCollection {
         employee.post("login", use: self.loginAsEmployee)
         /// With JWT
         protected.post("add", use: self.addEmployee)
-        protected.get(":id", use: self.getSpecificEmployee)
+        protected.get("detail", ":id", use: self.getSpecificEmployee)
         protected.delete("delete", use: self.deleteEmployee)
-        protected.get("getAll") { req async throws in
-            try await self.getAllEmployees(req: req)
-        }
+        protected.get("getAll", use: self.getAllEmployees)
     }
 }
 
