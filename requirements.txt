@@ -3,5 +3,5 @@ uvicorn
 motor
 pydantic
 pydantic-settings
-bcrypt
+passlib[bcrypt]
 pyjwt
