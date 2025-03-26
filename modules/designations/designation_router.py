@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from modules.designatons.designation_request_models import AddDesignationModel
-from modules.designatons.designation_response_models import (
+from modules.designations.designation_request_models import AddDesignationModel
+from modules.designations.designation_response_models import (
     GetDesignationModel,
     GetAllDesignationsModel,
 )
