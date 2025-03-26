@@ -13,7 +13,7 @@ async def get_all():
     departments_cursor = db.departments.find()
     # Make them as a list
     departments = await departments_cursor.to_list(length=None)
-    # Seralize the response according to requirement
+    # Serialize the response according to requirement
     serialzied_departments = [
         department_serialize(department) for department in departments
     ]
