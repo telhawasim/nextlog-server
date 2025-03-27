@@ -5,3 +5,4 @@ pydantic
 pydantic-settings
 passlib[bcrypt]
 pyjwt
+python-jose

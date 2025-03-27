@@ -16,5 +16,10 @@ class AddAdminRequest(BaseModel):
         if not self.password:
             raise CustomException(status_code=404, message="Password is required")
 
-    def hash_password(self):
-        self.password = pwd_context.hash(self.password)
+
+class DeleteAdminRequest(BaseModel):
+    email: Optional[str]
+
+    def delete_admin_validation(self):
+        if not self.email:
+            raise CustomException(status_code=404, message="Email is required")
