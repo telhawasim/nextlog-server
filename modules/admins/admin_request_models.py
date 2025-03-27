@@ -3,8 +3,6 @@ from typing import Optional
 from passlib.context import CryptContext
 from app.exception import CustomException
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 class AddAdminRequest(BaseModel):
     email: Optional[str] = None
