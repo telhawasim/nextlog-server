@@ -1,3 +1,6 @@
+BASE_URL = "http://127.0.0.1:8000"
+
+
 def employee_serialize(employee):
     return {
         "id": str(employee["_id"]),
@@ -19,6 +22,11 @@ def employee_serialize(employee):
                 "name": str(employee["department"]["name"]),
             }
             if "department" in employee and employee["department"]
+            else None
+        ),
+        "avatar": (
+            f"{BASE_URL}{employee["avatar"]}"
+            if "avatar" in employee and employee["avatar"]
             else None
         ),
     }

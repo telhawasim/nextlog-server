@@ -15,9 +15,18 @@ class EmployeeModel(BaseModel):
     department: Optional[GetDepartmentModel]
 
 
+class EmployeeRowModel(BaseModel):
+    id: str
+    name: str
+    email: str
+    designation: Optional[GetDesignationModel]
+    avatar: str
+    created_at: str
+
+
 class GetAllEmployees(BaseModel):
     total_pages: int
     current_page: int
     limit: int
     total_count: int
-    employees: List[EmployeeModel]
+    employees: List[EmployeeRowModel]

@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Query
-from .employee_request_models import AddEmployeeRequest
+from fastapi import APIRouter, Query, Form, File, UploadFile
 from .employee_repository import *
 
 router = APIRouter(tags=["Employee"], prefix="/employee")
@@ -15,5 +14,11 @@ async def get_all_employees(
 
 
 @router.post("/add")
-async def add_employee(request: AddEmployeeRequest):
-    return await add(request=request)
+async def add_employee(
+    name: str = Form(...),
+    email: str = Form(...),
+    designation: str = Form(...),
+    department: str = Form(...),
+    avatar: UploadFile = File(...),
+):
+    return await add(name, email, designation, department, avatar)

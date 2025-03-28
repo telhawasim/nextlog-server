@@ -3,11 +3,16 @@ from math import ceil
 from pymongo import DESCENDING
 from .employee_serialization import employee_serialize
 from .employee_response_models import GetAllEmployees
-from .employee_request_models import AddEmployeeRequest
 from app.exception import CustomException
 from .employee import Employee
 from modules.shared.models import BaseServerModel
 from bson import ObjectId
+from fastapi import File, UploadFile, Form
+import shutil
+import os
+
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 async def get_all(page: int, limit: int):
@@ -60,29 +65,53 @@ async def get_all(page: int, limit: int):
     )
 
 
-async def add(request: AddEmployeeRequest):
+async def add(
+    name: str = Form(...),
+    email: str = Form(...),
+    designation: str = Form(...),
+    department: str = Form(...),
+    avatar: UploadFile = File(...),
+):
     # Validate the request
-    request.validate_add_employee()
+    if not name:
+        raise CustomException(status_code=404, message="Name is required")
+    if not email:
+        raise CustomException(status_code=404, message="Email is required")
+    if not designation:
+        raise CustomException(status_code=404, message="Designation is required")
+    if not department:
+        raise CustomException(status_code=404, message="Department is required")
+    if not avatar:
+        raise CustomException(status_code=404, message="Profile image is required")
     # Extract the employee from the database
-    existing_employee = await db.employees.find_one({"email": request.email})
+    existing_employee = await db.employees.find_one({"email": email})
     # Throw exception if employee with this email already exists
     if existing_employee:
         raise CustomException(
             status_code=404, message="Employee with this email already exists"
         )
     # Extract the existing designation from database
-    existing_designation = db.designations.find_one(
-        {"_id": ObjectId(request.designation)}
-    )
+    existing_designation = db.designations.find_one({"_id": ObjectId(designation)})
     # Throw exception if there is no designation with the provided ID
     if not existing_designation:
         raise CustomException("Designation ID is invalid")
+    # Extract the existing department from database
+    existing_department = db.departments.find_one({"_id": ObjectId(department)})
+    # Throw exception if there is no department with the provided ID
+    if not existing_department:
+        raise CustomException(status_code=404, message="Department ID is invalid")
+    image_url = None
+    file_location = f"{UPLOAD_DIR}/{avatar.filename}"
+    with open(file_location, "wb") as buffer:
+        shutil.copyfileobj(avatar.file, buffer)
+    image_url = f"/{UPLOAD_DIR}/{avatar.filename}"
     # Make new object of Employee which needs to be added in database
     new_employee = Employee(
-        name=request.name,
-        email=request.email,
-        designation=ObjectId(request.designation),
-        department=ObjectId(request.department),
+        name=name,
+        email=email,
+        designation=ObjectId(designation),
+        department=ObjectId(department),
+        avatar=f"/upload/{avatar.filename}" if avatar else None,
     )
     # Insert the employee into the database
     await db.employees.insert_one(new_employee.model_dump())

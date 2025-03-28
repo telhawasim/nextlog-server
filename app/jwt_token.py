@@ -1,5 +1,5 @@
 from re import S
-from fastapi import Depends, Security, status
+from fastapi import Security
 from fastapi.security import (
     HTTPBearer,
     HTTPAuthorizationCredentials,
@@ -34,7 +34,7 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Security(secu
         exp = payload.get("exp")
         if not exp:
             raise CustomException(status_code=401, message="Token expired")
-        if exp and datetime.now(timezone.utc).timestamp > exp:
+        if exp and datetime.now(timezone.utc).timestamp() > exp:
             raise CustomException(status_code=401, message="Token expired")
         return payload
     except jwt.ExpiredSignatureError:
