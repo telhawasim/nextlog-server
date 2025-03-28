@@ -1,3 +1,4 @@
+from re import S
 from fastapi import Depends, Security, status
 from fastapi.security import (
     HTTPBearer,
@@ -9,7 +10,7 @@ from typing import Optional
 import jwt
 from app.exception import CustomException
 
-SECRET_KEY = "secret"
+SECRET_KEY = "8F573CF5A19BCAE3F9D999B7DE4BA"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -31,7 +32,8 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Security(secu
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         exp = payload.get("exp")
-
+        if not exp:
+            raise CustomException(status_code=401, message="Token expired")
         if exp and datetime.now(timezone.utc).timestamp > exp:
             raise CustomException(status_code=401, message="Token expired")
         return payload

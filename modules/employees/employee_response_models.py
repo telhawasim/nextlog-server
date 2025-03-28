@@ -1,6 +1,7 @@
 from pydantic import BaseModel
-from typing import List
-from .employee import Employee
+from typing import List, Optional
+
+from modules.designations.designation_response_models import GetDesignationModel
 
 
 class EmployeeModel(BaseModel):
@@ -9,6 +10,7 @@ class EmployeeModel(BaseModel):
     email: str
     role: str
     created_at: str
+    designation: Optional[GetDesignationModel]
 
 
 class GetAllEmployees(BaseModel):

@@ -10,8 +10,8 @@ app = FastAPI()
 
 app.add_exception_handler(CustomException, custom_exception_handler)
 
+app.include_router(authentication_router)
+app.include_router(admin_router)
+app.include_router(employee_router)
 app.include_router(department_router)
 app.include_router(designation_router)
-app.include_router(admin_router)
-app.include_router(authentication_router)
-app.include_router(employee_router)
