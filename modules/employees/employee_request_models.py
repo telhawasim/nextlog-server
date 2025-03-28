@@ -7,6 +7,7 @@ class AddEmployeeRequest(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     designation: Optional[str] = None
+    department: Optional[str] = None
 
     def validate_add_employee(self):
         if not self.name:
@@ -15,3 +16,5 @@ class AddEmployeeRequest(BaseModel):
             raise CustomException(status_code=404, message="Email is required")
         if not self.designation:
             raise CustomException(status_code=404, message="Designation is required")
+        if not self.department:
+            raise CustomException(status_code=404, message="Department is required")

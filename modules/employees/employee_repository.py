@@ -35,6 +35,15 @@ async def get_all(page: int, limit: int):
                 }
             },
             {"$unwind": {"path": "$designation", "preserveNullAndEmptyArrays": True}},
+            {
+                "$lookup": {
+                    "from": "departments",  # Collection name
+                    "localField": "department",  # FK in employees
+                    "foreignField": "_id",  # PK in designations
+                    "as": "department",
+                }
+            },
+            {"$unwind": {"path": "$department", "preserveNullAndEmptyArrays": True}},
         ]
     )
     # Convert the employees into list
@@ -73,6 +82,7 @@ async def add(request: AddEmployeeRequest):
         name=request.name,
         email=request.email,
         designation=ObjectId(request.designation),
+        department=ObjectId(request.department),
     )
     # Insert the employee into the database
     await db.employees.insert_one(new_employee.model_dump())

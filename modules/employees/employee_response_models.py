@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
+from modules.departments.department_response_models import GetDepartmentModel
 from modules.designations.designation_response_models import GetDesignationModel
 
 
@@ -11,6 +12,7 @@ class EmployeeModel(BaseModel):
     role: str
     created_at: str
     designation: Optional[GetDesignationModel]
+    department: Optional[GetDepartmentModel]
 
 
 class GetAllEmployees(BaseModel):

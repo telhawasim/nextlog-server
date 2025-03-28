@@ -8,6 +8,7 @@ class Employee(BaseModel):
     email: str
     role: str = "employee"
     designation: ObjectId
+    department: ObjectId
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Config:
