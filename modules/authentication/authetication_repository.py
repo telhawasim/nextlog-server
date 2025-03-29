@@ -18,14 +18,17 @@ async def login_user(request: LoginRequest):
         # Check the employee ID is same as per the request
         if request.emp_id != employee["emp_id"]:
             raise CustomException(status_code=404, message="Employee ID does not exist")
+        # Generate the token
         token = create_access_token(
             {
                 "id": str(employee["_id"]),
                 "email": employee["email"],
-                "role": employee["role"],
+                "role": "employee",
             }
         )
+        # Serialize the employee object
         serialized_employee = admin_serialize(employee)
+        # Response
         return LoginResponseModel(access_token=token, data=serialized_employee)
     else:
         admin = await db.admins.find_one({"email": request.email})
