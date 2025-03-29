@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 class Employee(BaseModel):
     name: str
     email: str
+    emp_id: int
     role: str = "employee"
     designation: ObjectId
     department: ObjectId

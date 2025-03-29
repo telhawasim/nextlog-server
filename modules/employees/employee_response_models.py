@@ -19,6 +19,7 @@ class EmployeeRowModel(BaseModel):
     id: str
     name: str
     email: str
+    emp_id: int
     designation: Optional[GetDesignationModel]
     avatar: str
     created_at: str

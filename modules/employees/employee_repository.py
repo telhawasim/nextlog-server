@@ -68,6 +68,7 @@ async def get_all(page: int, limit: int):
 async def add(
     name: str = Form(...),
     email: str = Form(...),
+    emp_id: int = Form(...),
     designation: str = Form(...),
     department: str = Form(...),
     avatar: UploadFile = File(...),
@@ -77,6 +78,8 @@ async def add(
         raise CustomException(status_code=404, message="Name is required")
     if not email:
         raise CustomException(status_code=404, message="Email is required")
+    if not emp_id:
+        raise CustomException(status_code=404, message="Employee ID is required")
     if not designation:
         raise CustomException(status_code=404, message="Designation is required")
     if not department:
@@ -109,6 +112,7 @@ async def add(
     new_employee = Employee(
         name=name,
         email=email,
+        emp_id=emp_id,
         designation=ObjectId(designation),
         department=ObjectId(department),
         avatar=f"/upload/{avatar.filename}" if avatar else None,

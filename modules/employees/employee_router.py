@@ -17,8 +17,9 @@ async def get_all_employees(
 async def add_employee(
     name: str = Form(...),
     email: str = Form(...),
+    emp_id: int = Form(...),
     designation: str = Form(...),
     department: str = Form(...),
     avatar: UploadFile = File(...),
 ):
-    return await add(name, email, designation, department, avatar)
+    return await add(name, email, emp_id, designation, department, avatar)
