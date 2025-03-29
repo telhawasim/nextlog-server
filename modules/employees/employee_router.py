@@ -22,8 +22,12 @@ async def add_employee(
     designation: str = Form(...),
     department: str = Form(...),
     avatar: UploadFile = File(...),
+    dob: str = Form(...),
+    date_of_joining: str = Form(...),
 ):
-    return await add(name, email, emp_id, designation, department, avatar)
+    return await add(
+        name, email, emp_id, designation, department, avatar, dob, date_of_joining
+    )
 
 
 # In order to delete the employee

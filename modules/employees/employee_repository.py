@@ -72,6 +72,8 @@ async def add(
     designation: str = Form(...),
     department: str = Form(...),
     avatar: UploadFile = File(...),
+    dob: str = Form(...),
+    date_of_joining: str = Form(...),
 ):
     # Validate the request
     if not name:
@@ -86,6 +88,10 @@ async def add(
         raise CustomException(status_code=404, message="Department is required")
     if not avatar:
         raise CustomException(status_code=404, message="Profile image is required")
+    if not dob:
+        raise CustomException(status_code=404, message="Date of birth is required")
+    if not date_of_joining:
+        raise CustomException(status_code=404, message="Date of joining is required")
     # Extract the employee from the database
     existing_employee = await db.employees.find_one({"email": email})
     # Throw exception if employee with this email already exists
@@ -116,6 +122,8 @@ async def add(
         designation=ObjectId(designation),
         department=ObjectId(department),
         avatar=f"/upload/{avatar.filename}" if avatar else None,
+        dob=dob,
+        date_of_joining=date_of_joining,
     )
     # Insert the employee into the database
     await db.employees.insert_one(new_employee.model_dump())
