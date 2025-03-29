@@ -23,3 +23,8 @@ async def add_employee(
     avatar: UploadFile = File(...),
 ):
     return await add(name, email, emp_id, designation, department, avatar)
+
+
+@router.delete("/{id}")
+async def delete_employee(id):
+    return await delete(id=id)

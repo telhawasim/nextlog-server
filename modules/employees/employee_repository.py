@@ -121,3 +121,21 @@ async def add(
     await db.employees.insert_one(new_employee.model_dump())
     # Response
     return BaseServerModel(status=200, message="Employee has been added successfully")
+
+
+async def delete(id: str):
+    # Find employee in database
+    employee = await db.employees.find_one({"_id": ObjectId(id)})
+    if not employee:
+        raise CustomException(status_code=404, message="Employee not found")
+    # Get the avatar path
+    avatar_path = employee.get("avatar")
+    if avatar_path:
+        file_path = os.path.join(UPLOAD_DIR, os.path.basename(avatar_path))
+        # Remove the file if it exists
+        if os.path.exists(file_path):
+            os.remove(file_path)
+    # Delete the employee from the database
+    await db.employees.delete_one({"_id": ObjectId(id)})
+    # Response
+    return BaseServerModel(status=200, message="Employee has been deleted successfully")
