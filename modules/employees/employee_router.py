@@ -13,6 +13,7 @@ async def get_all_employees(
     return await get_all(page=page, limit=limit)
 
 
+# In order to add new employee
 @router.post("/add")
 async def add_employee(
     name: str = Form(...),
@@ -25,6 +26,7 @@ async def add_employee(
     return await add(name, email, emp_id, designation, department, avatar)
 
 
+# In order to delete the employee
 @router.delete("/{id}")
 async def delete_employee(id):
     return await delete(id=id)
