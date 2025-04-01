@@ -13,6 +13,12 @@ async def get_all_employees(
     return await get_all(page=page, limit=limit)
 
 
+# In order to get the detail of the employee
+@router.get("/detail{id}", response_model=EmployeeDetail)
+async def get_detail(id):
+    return await detail(id)
+
+
 # In order to add new employee
 @router.post("/add")
 async def add_employee(

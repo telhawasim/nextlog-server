@@ -38,6 +38,6 @@ def employee_serialize(employee):
                 "title": profile["title"],
                 "created_at": str(profile["created_at"]),
             }
-            for profile in employee.get("profiles", [])  # ✅ Iterate over list
+            for profile in employee.get("profiles", [])
         ],
     }

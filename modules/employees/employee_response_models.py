@@ -27,6 +27,18 @@ class EmployeeRowModel(BaseModel):
     profiles: List[ProfileModel]
 
 
+class EmployeeDetail(BaseModel):
+    id: str
+    name: str
+    email: str
+    emp_id: int
+    designation: Optional[GetDesignationModel]
+    department: Optional[GetDepartmentModel]
+    avatar: str
+    created_at: str
+    profiles: list[ProfileModel]
+
+
 class GetAllEmployees(BaseModel):
     total_pages: int
     current_page: int

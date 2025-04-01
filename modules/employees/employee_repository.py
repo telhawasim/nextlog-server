@@ -1,8 +1,9 @@
+from pydantic import TypeAdapter, parse_obj_as
+import pydantic
 from app.mongodb import db
 from math import ceil
-from pymongo import DESCENDING
 from .employee_serialization import employee_serialize
-from .employee_response_models import GetAllEmployees
+from .employee_response_models import EmployeeDetail, GetAllEmployees
 from app.exception import CustomException
 from .employee import Employee
 from modules.shared.models import BaseServerModel
@@ -57,7 +58,7 @@ async def get_all(page: int, limit: int):
                     "as": "profiles",
                 }
             },
-        ]
+        ],
     )
     # Convert the employees into list
     employees = await employees_cursor.to_list(length=limit)
@@ -71,6 +72,60 @@ async def get_all(page: int, limit: int):
         limit=limit,
         employees=serialized_employees,
     )
+
+
+async def detail(id):
+    # Extract the employee from the database
+    employee = await db.employees.find_one({"_id": ObjectId(id)})
+    # Throw exception if there is not employee
+    if not employee:
+        raise CustomException(status_code=404, message="Employee doesn't exist")
+    # Aggregate the employee object
+    employee_cursor = db.employees.aggregate(
+        [
+            {
+                "$lookup": {
+                    "from": "designations",
+                    "localField": "designation",
+                    "foreignField": "_id",
+                    "as": "designation",
+                }
+            },
+            {"$unwind": {"path": "$designation", "preserveNullAndEmptyArrays": True}},
+            {
+                "$lookup": {
+                    "from": "departments",
+                    "localField": "department",
+                    "foreignField": "_id",
+                    "as": "department",
+                }
+            },
+            {"$unwind": {"path": "$department", "preserveNullAndEmptyArrays": True}},
+            {
+                "$lookup": {
+                    "from": "profiles",
+                    "localField": "profiles",
+                    "foreignField": "_id",
+                    "as": "profiles",
+                }
+            },
+        ]
+    )
+    # Extract the Employee data after aggregation
+    employee_data = await employee_cursor.to_list(length=1)
+    # Throw exception if there is not data for employee
+    if not employee_data:
+        raise CustomException(status_code=404, message="There is no employee data")
+    # Get the employee
+    employee = employee_data[0]
+    # Serialize the employee
+    serialized_employee = employee_serialize(employee)
+    # Create a TypeAdapter for EmployeeDetail
+    employee_detail_adapter = TypeAdapter(EmployeeDetail)
+    # Parse the data according to the model
+    employee_detail = employee_detail_adapter.validate_python(serialized_employee)
+    # Response
+    return employee_detail
 
 
 async def add(
