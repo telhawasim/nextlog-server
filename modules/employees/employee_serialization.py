@@ -6,6 +6,7 @@ def employee_serialize(employee):
         "id": str(employee["_id"]),
         "name": employee["name"],
         "email": employee["email"],
+        "phone": employee["phone"],
         "emp_id": employee["emp_id"],
         "role": employee["role"],
         "dob": str(employee["dob"]),

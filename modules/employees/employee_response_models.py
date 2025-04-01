@@ -45,3 +45,9 @@ class GetAllEmployees(BaseModel):
     limit: int
     total_count: int
     employees: List[EmployeeRowModel]
+
+
+class EmployeeDetailResponse(BaseModel):
+    message: str
+    status: int
+    employee: EmployeeDetail

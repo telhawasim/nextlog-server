@@ -3,7 +3,11 @@ import pydantic
 from app.mongodb import db
 from math import ceil
 from .employee_serialization import employee_serialize
-from .employee_response_models import EmployeeDetail, GetAllEmployees
+from .employee_response_models import (
+    EmployeeDetail,
+    EmployeeDetailResponse,
+    GetAllEmployees,
+)
 from app.exception import CustomException
 from .employee import Employee
 from modules.shared.models import BaseServerModel
@@ -125,13 +129,16 @@ async def detail(id):
     # Parse the data according to the model
     employee_detail = employee_detail_adapter.validate_python(serialized_employee)
     # Response
-    return employee_detail
+    return EmployeeDetailResponse(
+        message="Success", status=200, employee=employee_detail
+    )
 
 
 async def add(
     name: str = Form(...),
     email: str = Form(...),
     emp_id: int = Form(...),
+    phone: str = Form(...),
     designation: str = Form(...),
     department: str = Form(...),
     avatar: UploadFile = File(...),
@@ -145,6 +152,8 @@ async def add(
         raise CustomException(status_code=404, message="Email is required")
     if not emp_id:
         raise CustomException(status_code=404, message="Employee ID is required")
+    if not phone:
+        raise CustomException(status_code=404, message="Phone is required")
     if not designation:
         raise CustomException(status_code=404, message="Designation is required")
     if not department:
@@ -182,6 +191,7 @@ async def add(
         name=name,
         email=email,
         emp_id=emp_id,
+        phone=phone,
         designation=ObjectId(designation),
         department=ObjectId(department),
         avatar=f"/upload/{avatar.filename}" if avatar else None,

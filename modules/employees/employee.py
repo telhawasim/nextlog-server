@@ -9,6 +9,7 @@ class Employee(BaseModel):
     email: str
     emp_id: int
     role: str = "employee"
+    phone: str
     designation: ObjectId
     department: ObjectId
     avatar: str

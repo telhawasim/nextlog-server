@@ -14,7 +14,7 @@ async def get_all_employees(
 
 
 # In order to get the detail of the employee
-@router.get("/detail{id}", response_model=EmployeeDetail)
+@router.get("/detail/{id}", response_model=EmployeeDetailResponse)
 async def get_detail(id):
     return await detail(id)
 
@@ -25,6 +25,7 @@ async def add_employee(
     name: str = Form(...),
     email: str = Form(...),
     emp_id: int = Form(...),
+    phone: str = Form(...),
     designation: str = Form(...),
     department: str = Form(...),
     avatar: UploadFile = File(...),
@@ -32,7 +33,15 @@ async def add_employee(
     date_of_joining: str = Form(...),
 ):
     return await add(
-        name, email, emp_id, designation, department, avatar, dob, date_of_joining
+        name,
+        email,
+        emp_id,
+        phone,
+        designation,
+        department,
+        avatar,
+        dob,
+        date_of_joining,
     )
 
 
