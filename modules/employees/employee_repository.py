@@ -49,6 +49,14 @@ async def get_all(page: int, limit: int):
                 }
             },
             {"$unwind": {"path": "$department", "preserveNullAndEmptyArrays": True}},
+            {
+                "$lookup": {
+                    "from": "profiles",
+                    "localField": "profiles",
+                    "foreignField": "_id",
+                    "as": "profiles",
+                }
+            },
         ]
     )
     # Convert the employees into list
