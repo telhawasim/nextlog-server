@@ -14,17 +14,17 @@ router = APIRouter(tags=["Profile"], prefix="/profile")
 @router.post("/add")
 async def add_profile(request: AddProfile):
     # Check whether the employee exists
-    employee = await db.employees.find_one({"_id": ObjectId(request.emp_id)})
+    employee = await db.employees.find_one({"_id": ObjectId(request.id)})
     # Throw exception if employee doesn't exist
     if not employee:
         return CustomException(status_code=404, message="Employee not found")
     # Make a new object of Profile
-    new_profile = Profile(employee_id=ObjectId(request.emp_id), title=request.name)
+    new_profile = Profile(employee_id=ObjectId(request.id), title=request.name)
     # Insert the object in the database
     profile_insert = await db.profiles.insert_one(new_profile.model_dump())
     # Update the employee model
     await db.employees.update_one(
-        {"_id": ObjectId(request.emp_id)},
+        {"_id": ObjectId(request.id)},
         {"$push": {"profiles": profile_insert.inserted_id}},
     )
     return BaseServerModel(status=200, message="Profile has been created successfully")
