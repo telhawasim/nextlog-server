@@ -109,8 +109,13 @@ async def detail(id):
             {
                 "$lookup": {
                     "from": "profiles",
-                    "localField": "profiles",
-                    "foreignField": "_id",
+                    "let": {"profile_ids": "$profiles"},
+                    "pipeline": [
+                        {"$match": {"$expr": {"$in": ["$_id", "$$profile_ids"]}}},
+                        {
+                            "$sort": {"created_at": -1}
+                        },  # Sort profiles by created_at (descending)
+                    ],
                     "as": "profiles",
                 }
             },
@@ -217,6 +222,8 @@ async def delete(id: str):
         # Remove the file if it exists
         if os.path.exists(file_path):
             os.remove(file_path)
+    # Delete the profiles associated with the employee
+    await db.profiles.delete_many({"employee_id": ObjectId(id)})
     # Delete the employee from the database
     await db.employees.delete_one({"_id": ObjectId(id)})
     # Response

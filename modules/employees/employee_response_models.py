@@ -3,7 +3,10 @@ from typing import List, Optional
 
 from modules.departments.department_response_models import GetDepartmentModel
 from modules.designations.designation_response_models import GetDesignationModel
-from modules.profiles.profile_response_models import ProfileModel
+from modules.profiles.profile_response_models import (
+    EmployeeDetailProfileModel,
+    ProfileModel,
+)
 
 
 class EmployeeModel(BaseModel):
@@ -24,7 +27,6 @@ class EmployeeRowModel(BaseModel):
     designation: Optional[GetDesignationModel]
     avatar: str
     created_at: str
-    profiles: List[ProfileModel]
 
 
 class EmployeeDetail(BaseModel):
@@ -36,7 +38,7 @@ class EmployeeDetail(BaseModel):
     department: Optional[GetDepartmentModel]
     avatar: str
     created_at: str
-    profiles: list[ProfileModel]
+    profiles: list[EmployeeDetailProfileModel]
 
 
 class GetAllEmployees(BaseModel):
