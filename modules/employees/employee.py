@@ -13,9 +13,11 @@ class Employee(BaseModel):
     designation: ObjectId
     department: ObjectId
     avatar: str
-    dob: datetime
-    date_of_joining: datetime
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    dob: str
+    date_of_joining: str
+    created_at: str = (
+        datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "+00:00"
+    )
     profiles: List[ObjectId] = []
 
     class Config:

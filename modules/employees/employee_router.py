@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Query, Form, File, UploadFile
 from .employee_repository import *
 
@@ -46,6 +47,6 @@ async def add_employee(
 
 
 # In order to delete the employee
-@router.delete("/{id}")
+@router.delete("/delete/{id}")
 async def delete_employee(id):
     return await delete(id=id)
