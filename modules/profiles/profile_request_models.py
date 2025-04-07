@@ -12,3 +12,25 @@ class AddProfile(BaseModel):
             raise CustomException(status_code=422, message="Employee ID is required")
         if not self.name:
             raise CustomException(status_code=422, message="Profile name is required")
+
+
+class AddBasicInformation(BaseModel):
+    name: Optional[str] = None
+    designation: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    git_link: Optional[str] = None
+    linked_in_link: Optional[str] = None
+    summary: Optional[str] = None
+
+    def add_basic_information_validation(self):
+        if not self.name:
+            raise CustomException(status_code=422, message="Name is required")
+        if not self.designation:
+            raise CustomException(status_code=422, message="Designation is required")
+        if not self.email:
+            raise CustomException(status_code=422, message="Email is required")
+        if not self.phone:
+            raise CustomException(status_code=422, message="Phone number is required")
+        if not self.summary:
+            raise CustomException(status_code=422, message="Summar is required")

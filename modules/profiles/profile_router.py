@@ -3,11 +3,44 @@ from bson import ObjectId
 from fastapi import APIRouter
 from app.mongodb import db
 from app.exception import CustomException
+from helper.convert_object_id_to_str import convert_object_id_to_str
 from modules.profiles.profile import Profile
 from modules.shared.models import BaseServerModel
-from .profile_request_models import AddProfile
+from .profile_request_models import AddBasicInformation, AddProfile
 
 router = APIRouter(tags=["Profile"], prefix="/profile")
+
+
+# In order to get the details of a profile
+@router.get("/detail/{id}")
+async def get_profile_detail(id: str):
+    profile_cursor = db.profiles.aggregate(
+        [
+            {"$match": {"_id": ObjectId(id)}},
+            {
+                "$lookup": {
+                    "from": "designations",
+                    "localField": "basic_information.designation",
+                    "foreignField": "_id",
+                    "as": "designation_detail",
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$designation_detail",
+                    "preserveNullAndEmptyArrays": True,
+                }
+            },
+            {"$addFields": {"basic_information.designation": "$designation_detail"}},
+            {"$project": {"designation_detail": 0}},
+        ]
+    )
+
+    result = await profile_cursor.to_list(length=1)
+    if not result:
+        raise CustomException(status_code=404, message="Profile not found")
+    cleaned_result = convert_object_id_to_str(result[0])
+    return cleaned_result
 
 
 # In order to add new profile against an employee
@@ -54,3 +87,31 @@ async def delete_profile(id):
         status=200,
         message="Profile deleted successfully",
     )
+
+
+# In order to add basic information against a profile
+@router.put("/{id}/basic-information")
+async def add_basic_information(id: str, request: AddBasicInformation):
+    # Check if the profile exists
+    profile = await db.profiles.find_one({"_id": ObjectId(id)})
+    # Throw exception if profiles doesn't exists
+    if not profile:
+        raise CustomException(status_code=404, message="Profile not found")
+    # Check if the designation exists
+    designation_id = await db.designations.find_one(
+        {"_id": ObjectId(request.designation)}
+    )
+    # Throw exception if designation doesn't exists
+    if not designation_id:
+        raise CustomException(status_code=400, message="Invalid designation ID")
+    # Convert the designation ID to ObjectID
+    designation_id_in_objectID = ObjectId(request.designation)
+    # Convert the request model to a dictionary
+    basic_info_dict = request.model_dump()
+    # Set the designation ID in the dictionary
+    basic_info_dict["designation"] = designation_id_in_objectID
+    # Update the basic information for the profile
+    await db.profiles.update_one(
+        {"_id": ObjectId(id)}, {"$set": {"basic_information": basic_info_dict}}
+    )
+    return BaseServerModel(status=200, message="Basic information updated successfully")

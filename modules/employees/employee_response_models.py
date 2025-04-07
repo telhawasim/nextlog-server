@@ -33,6 +33,7 @@ class EmployeeDetail(BaseModel):
     id: str
     name: str
     email: str
+    phone: str
     emp_id: int
     designation: Optional[GetDesignationModel]
     department: Optional[GetDepartmentModel]
