@@ -1,4 +1,3 @@
-from os import name
 from bson import ObjectId
 from fastapi import APIRouter
 from app.mongodb import db
@@ -14,6 +13,7 @@ router = APIRouter(tags=["Profile"], prefix="/profile")
 # In order to get the details of a profile
 @router.get("/detail/{id}")
 async def get_profile_detail(id: str):
+    # Extract the profile from the database
     profile_cursor = db.profiles.aggregate(
         [
             {"$match": {"_id": ObjectId(id)}},
@@ -35,11 +35,19 @@ async def get_profile_detail(id: str):
             {"$project": {"designation_detail": 0}},
         ]
     )
-
+    # Extract the results from the cursor
     result = await profile_cursor.to_list(length=1)
+    # Throw exception if result doesn't exist
     if not result:
         raise CustomException(status_code=404, message="Profile not found")
-    cleaned_result = convert_object_id_to_str(result[0])
+    # Convert the received result into a profile object
+    profile = result[0]
+    # Check if the profile has basic information
+    if not profile.get("basic_information"):
+        profile["basic_information"] = None
+    # Convert the ObjectId to string
+    cleaned_result = convert_object_id_to_str(profile)
+    # Response
     return cleaned_result
 
 
