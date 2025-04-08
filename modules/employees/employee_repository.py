@@ -88,6 +88,7 @@ async def detail(id):
     # Aggregate the employee object
     employee_cursor = db.employees.aggregate(
         [
+            {"$match": {"_id": ObjectId(id)}},
             {
                 "$lookup": {
                     "from": "designations",
