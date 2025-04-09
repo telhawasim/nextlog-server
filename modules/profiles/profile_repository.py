@@ -13,32 +13,36 @@ from modules.shared.models import BaseServerModel
 
 
 async def get_detail(id: str):
-    # Extract the profile from the database
     profile_cursor = db.profiles.aggregate(
         [
             {"$match": {"_id": ObjectId(id)}},
+            # Lookup for basic_information.designation
             {
                 "$lookup": {
                     "from": "designations",
                     "localField": "basic_information.designation",
                     "foreignField": "_id",
-                    "as": "designation_detail",
+                    "as": "basic_info_designation",
                 }
             },
             {
                 "$unwind": {
-                    "path": "$designation_detail",
+                    "path": "$basic_info_designation",
                     "preserveNullAndEmptyArrays": True,
                 }
             },
-            {"$addFields": {"basic_information.designation": "$designation_detail"}},
-            {"$project": {"designation_detail": 0}},
+            {
+                "$addFields": {
+                    "basic_information.designation": "$basic_info_designation"
+                }
+            },
+            # Lookup for current_experience.designation
             {
                 "$lookup": {
                     "from": "designations",
-                    "localField": "experience.current_experience.designation",  # Path to current_experience.designation
+                    "localField": "experience.current_experience.designation",
                     "foreignField": "_id",
-                    "as": "current_experience_designation",  # Alias for the result
+                    "as": "current_experience_designation",
                 }
             },
             {
@@ -52,19 +56,44 @@ async def get_detail(id: str):
                     "experience.current_experience.designation": "$current_experience_designation"
                 }
             },
-            # Lookup to get designation for previous_experience (if any)
+            # Ensure previous_experience exists and is an array or null
+            {
+                "$addFields": {
+                    "experience.previous_experience": {
+                        "$cond": {
+                            "if": {
+                                "$gt": [
+                                    {
+                                        "$size": {
+                                            "$ifNull": [
+                                                "$experience.previous_experience",
+                                                [],
+                                            ]
+                                        }
+                                    },
+                                    0,
+                                ]
+                            },
+                            "then": "$experience.previous_experience",
+                            "else": None,
+                        }
+                    }
+                }
+            },
+            # Unwind previous_experience (if not None) to allow lookup
             {
                 "$unwind": {
                     "path": "$experience.previous_experience",
                     "preserveNullAndEmptyArrays": True,
                 }
             },
+            # Lookup for previous_experience.designation
             {
                 "$lookup": {
                     "from": "designations",
-                    "localField": "experience.previous_experience.designation",  # Path to previous_experience.designation
+                    "localField": "experience.previous_experience.designation",
                     "foreignField": "_id",
-                    "as": "previous_experience_designation",  # Alias for the result
+                    "as": "previous_experience_designation",
                 }
             },
             {
@@ -78,31 +107,68 @@ async def get_detail(id: str):
                     "experience.previous_experience.designation": "$previous_experience_designation"
                 }
             },
+            # Regroup previous_experience into an array (or None)
+            {
+                "$group": {
+                    "_id": "$_id",
+                    "doc": {"$first": "$$ROOT"},
+                    "previous_experience": {"$push": "$experience.previous_experience"},
+                }
+            },
+            {
+                "$addFields": {
+                    "doc.experience.previous_experience": {
+                        "$cond": {
+                            "if": {
+                                "$eq": [
+                                    {
+                                        "$filter": {
+                                            "input": "$previous_experience",
+                                            "as": "exp",
+                                            "cond": {"$ne": ["$$exp", {}]},
+                                        }
+                                    },
+                                    [],
+                                ]
+                            },
+                            "then": None,
+                            "else": {
+                                "$filter": {
+                                    "input": "$previous_experience",
+                                    "as": "exp",
+                                    "cond": {"$ne": ["$$exp", {}]},
+                                }
+                            },
+                        }
+                    }
+                }
+            },
+            {"$replaceRoot": {"newRoot": "$doc"}},
             {
                 "$project": {
-                    "basic_information": 1,
-                    "experience": 1,
-                    "_id": 1,
-                    "employee_id": 1,
-                    "title": 1,
-                    "created_at": 1,
+                    "basic_info_designation": 0,
+                    "current_experience_designation": 0,
+                    "previous_experience_designation": 0,
                 }
             },
         ]
     )
-    # Extract the results from the cursor
+
     result = await profile_cursor.to_list(length=1)
-    # Throw exception if result doesn't exist
+
     if not result:
         raise CustomException(status_code=404, message="Profile not found")
-    # Convert the received result into a profile object
+
     profile = result[0]
-    # Check if the profile has basic information
+
     if not profile.get("basic_information"):
         profile["basic_information"] = None
-    # Convert the ObjectId to string
+    if not profile.get("experience", {}).get("current_experience"):
+        profile["experience"]["current_experience"] = None
+    if "experience" in profile and "previous_experience" not in profile["experience"]:
+        profile["experience"]["previous_experience"] = None
+
     cleaned_result = convert_object_id_to_str(profile)
-    # Response
     return cleaned_result
 
 

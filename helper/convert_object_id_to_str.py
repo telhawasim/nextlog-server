@@ -1,12 +1,18 @@
 from bson import ObjectId
 
 
-def convert_object_id_to_str(doc):
-    if isinstance(doc, dict):
-        return {key: convert_object_id_to_str(value) for key, value in doc.items()}
-    elif isinstance(doc, list):
-        return [convert_object_id_to_str(item) for item in doc]
-    elif isinstance(doc, ObjectId):
-        return str(doc)
+def convert_object_id_to_str(obj):
+    if isinstance(obj, list):
+        return [convert_object_id_to_str(item) for item in obj]
+    elif isinstance(obj, dict):
+        new_obj = {}
+        for key, value in obj.items():
+            if key == "_id":
+                new_obj["id"] = str(value)
+            else:
+                new_obj[key] = convert_object_id_to_str(value)
+        return new_obj
+    elif isinstance(obj, ObjectId):
+        return str(obj)
     else:
-        return doc
+        return obj

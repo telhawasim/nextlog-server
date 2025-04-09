@@ -37,7 +37,7 @@ class AddBasicInformation(BaseModel):
             raise CustomException(status_code=422, message="Summar is required")
 
 
-class AddExperienceRequest(BaseModel):
+class AddExperience(BaseModel):
     company_name: str
     designation: str
     start_date: str
@@ -58,5 +58,5 @@ class AddExperienceRequest(BaseModel):
 
 
 class AddExperienceRequest(BaseModel):
-    current_experience: AddExperienceRequest
-    previous_experience: Optional[List[AddExperienceRequest]] = None
+    current_experience: AddExperience
+    previous_experience: Optional[List[AddExperience]] = None
