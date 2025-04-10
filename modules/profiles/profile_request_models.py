@@ -99,3 +99,17 @@ class AddCertification(BaseModel):
 class AddQualificationRequest(BaseModel):
     qualification: List[AddQualification]
     certification: Optional[List[AddCertification]] = None
+
+
+class AddSkill(BaseModel):
+    name: str
+
+    def add_skill_validation(self):
+        if not self.name:
+            raise CustomException(status_code=422, message="Skill name is required")
+
+
+class AddSkillRequest(BaseModel):
+    technical_skills: Optional[List[AddSkill]] = None
+    non_technical_skills: Optional[List[AddSkill]] = None
+    tools: Optional[List[AddSkill]] = None

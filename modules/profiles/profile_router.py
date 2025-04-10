@@ -49,3 +49,8 @@ async def add_experience(id: str, request: AddExperienceRequest):
 @router.put("/{id}/qualification")
 async def add_qualification(id: str, request: AddQualificationRequest):
     return await add_qualifications(id=id, request=request)
+
+
+@router.put("/{id}/skill")
+async def add_skill(id: str, request: AddSkillRequest):
+    return await add_skills(id=id, request=request)

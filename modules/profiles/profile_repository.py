@@ -1,14 +1,20 @@
+from json import tool
 from profile import Profile
 from bson import ObjectId
 from app.exception import CustomException
 from helper.convert_object_id_to_str import convert_object_id_to_str
 from app.mongodb import db
+from modules.profiles.profile_response_models import (
+    ProfileDetailEmployeeModel,
+    ProfileDetailResponseModel,
+)
 from .profile import Profile
 from modules.profiles.profile_request_models import (
     AddBasicInformation,
     AddExperienceRequest,
     AddProfile,
     AddQualificationRequest,
+    AddSkillRequest,
 )
 from modules.shared.models import BaseServerModel
 
@@ -17,6 +23,29 @@ async def get_detail(id: str):
     profile_cursor = db.profiles.aggregate(
         [
             {"$match": {"_id": ObjectId(id)}},
+            {
+                "$lookup": {
+                    "from": "employees",
+                    "localField": "employee_id",
+                    "foreignField": "_id",
+                    "as": "employee_data",
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$employee_data",
+                    "preserveNullAndEmptyArrays": True,
+                }
+            },
+            {
+                "$addFields": {
+                    "employee": {
+                        "id": "$employee_data._id",
+                        "name": "$employee_data.name",
+                        "avatar": "$employee_data.avatar",
+                    }
+                }
+            },
             # Lookup for basic_information.designation
             {
                 "$lookup": {
@@ -120,6 +149,68 @@ async def get_detail(id: str):
                     }
                 }
             },
+            {
+                "$addFields": {
+                    "skill.technical_skills": {
+                        "$cond": {
+                            "if": {
+                                "$gt": [
+                                    {
+                                        "$size": {
+                                            "$ifNull": [
+                                                "$skill.technical_skills",
+                                                [],
+                                            ]
+                                        }
+                                    },
+                                    0,
+                                ]
+                            },
+                            "then": "$skill.technical_skills",
+                            "else": None,
+                        }
+                    }
+                }
+            },
+            {
+                "$addFields": {
+                    "skill.non_technical_skills": {
+                        "$cond": {
+                            "if": {
+                                "$gt": [
+                                    {
+                                        "$size": {
+                                            "$ifNull": [
+                                                "$skill.non_technical_skills",
+                                                [],
+                                            ]
+                                        }
+                                    },
+                                    0,
+                                ]
+                            },
+                            "then": "$skill.non_technical_skills",
+                            "else": None,
+                        }
+                    }
+                }
+            },
+            {
+                "$addFields": {
+                    "tool": {
+                        "$cond": {
+                            "if": {
+                                "$gt": [
+                                    {"$size": {"$ifNull": ["$tool", []]}},
+                                    0,
+                                ]
+                            },
+                            "then": "$tool",
+                            "else": None,
+                        }
+                    }
+                }
+            },
             # Lookup for previous_experience.designation
             {
                 "$lookup": {
@@ -179,6 +270,7 @@ async def get_detail(id: str):
             {"$replaceRoot": {"newRoot": "$doc"}},
             {
                 "$project": {
+                    "employee_data": 0,
                     "basic_info_designation": 0,
                     "current_experience_designation": 0,
                     "previous_experience_designation": 0,
@@ -200,8 +292,9 @@ async def get_detail(id: str):
         profile["experience"]["current_experience"] = None
     if "experience" in profile and "previous_experience" not in profile["experience"]:
         profile["experience"]["previous_experience"] = None
-
+    # Converting '_id' to 'id'
     cleaned_result = convert_object_id_to_str(profile)
+    # Response
     return cleaned_result
 
 
@@ -344,6 +437,44 @@ async def add_qualifications(id: str, request: AddQualificationRequest):
             "$set": {
                 "qualification": qualification_data,
                 "certification": certification_data,
+            }
+        },
+    )
+    # Response
+    return BaseServerModel(status=200, message="Experience added successfully")
+
+
+async def add_skills(id: str, request: AddSkillRequest):
+    # Check if the profile exists
+    profile = await db.profiles.find_one({"_id": ObjectId(id)})
+    # Throw exception if profile doesn't exist
+    if not profile:
+        raise CustomException(status_code=404, message="Profile not found")
+    # Handle the technical skills according to the request
+    technical_skills = request.technical_skills or []
+    # Handle the non technical skills according to the request
+    non_technical_skills = request.non_technical_skills or []
+    # Handle the tootsl according to the request
+    tools = request.tools or []
+    # Handle the skills data according to the database
+    skills_data = {
+        "technical_skills": [
+            {"name": technical_skill.name} for technical_skill in technical_skills
+        ],
+        "non_technical_skills": [
+            {"name": non_technical_skill.name}
+            for non_technical_skill in non_technical_skills
+        ],
+    }
+    # Handle the tools data according to the database
+    tools_data = [{"name": tool.name} for tool in tools]
+    # Add the skills data to the profile
+    await db.profiles.update_one(
+        {"_id": ObjectId(id)},
+        {
+            "$set": {
+                "skill": skills_data,
+                "tool": tools_data,
             }
         },
     )

@@ -201,7 +201,7 @@ async def add(
         phone=phone,
         designation=ObjectId(designation),
         department=ObjectId(department),
-        avatar=f"/upload/{avatar.filename}" if avatar else None,
+        avatar=f"upload/{avatar.filename}" if avatar else None,
         dob=dob,
         date_of_joining=date_of_joining,
     )
