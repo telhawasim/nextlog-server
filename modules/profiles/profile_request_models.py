@@ -60,3 +60,42 @@ class AddExperience(BaseModel):
 class AddExperienceRequest(BaseModel):
     current_experience: AddExperience
     previous_experience: Optional[List[AddExperience]] = None
+
+
+class AddQualification(BaseModel):
+    degree: str
+    institution: str
+    start_date: str
+    end_date: str
+
+    def add_qualification_validation(self):
+        if not self.degree:
+            raise CustomException(status_code=422, message="Degree is required")
+        if not self.institution:
+            raise CustomException(status_code=422, message="Institution is required")
+        if not self.start_date:
+            raise CustomException(status_code=422, message="Start date is required")
+        if not self.end_date:
+            raise CustomException(status_code=422, message="End date is required")
+
+
+class AddCertification(BaseModel):
+    course_name: str
+    institution: str
+    start_date: str
+    end_date: str
+
+    def add_cerfication_validation(self):
+        if not self.course_name:
+            raise CustomException(status_code=422, message="Course name is required")
+        if not self.institution:
+            raise CustomException(status_code=422, message="Institution is required")
+        if not self.start_date:
+            raise CustomException(status_code=422, message="Start date is required")
+        if not self.end_date:
+            raise CustomException(status_code=422, message="End date is required")
+
+
+class AddQualificationRequest(BaseModel):
+    qualification: List[AddQualification]
+    certification: Optional[List[AddCertification]] = None

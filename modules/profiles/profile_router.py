@@ -9,6 +9,7 @@ from .profile_request_models import (
     AddBasicInformation,
     AddExperienceRequest,
     AddProfile,
+    AddQualificationRequest,
 )
 from .profile_repository import *
 
@@ -43,3 +44,8 @@ async def add_basic_information(id: str, request: AddBasicInformation):
 @router.put("/{id}/experience")
 async def add_experience(id: str, request: AddExperienceRequest):
     return await add_experiences(id=id, request=request)
+
+
+@router.put("/{id}/qualification")
+async def add_qualification(id: str, request: AddQualificationRequest):
+    return await add_qualifications(id=id, request=request)

@@ -8,6 +8,7 @@ from modules.profiles.profile_request_models import (
     AddBasicInformation,
     AddExperienceRequest,
     AddProfile,
+    AddQualificationRequest,
 )
 from modules.shared.models import BaseServerModel
 
@@ -85,6 +86,38 @@ async def get_detail(id: str):
                 "$unwind": {
                     "path": "$experience.previous_experience",
                     "preserveNullAndEmptyArrays": True,
+                }
+            },
+            {
+                "$addFields": {
+                    "qualification": {
+                        "$cond": {
+                            "if": {
+                                "$gt": [
+                                    {"$size": {"$ifNull": ["$qualification", []]}},
+                                    0,
+                                ]
+                            },
+                            "then": "$qualification",
+                            "else": None,
+                        }
+                    }
+                }
+            },
+            {
+                "$addFields": {
+                    "certification": {
+                        "$cond": {
+                            "if": {
+                                "$gt": [
+                                    {"$size": {"$ifNull": ["$certification", []]}},
+                                    0,
+                                ]
+                            },
+                            "then": "$certification",
+                            "else": None,
+                        }
+                    }
                 }
             },
             # Lookup for previous_experience.designation
@@ -271,6 +304,48 @@ async def add_experiences(id: str, request: AddExperienceRequest):
     # Add the experience data to the profile
     await db.profiles.update_one(
         {"_id": ObjectId(id)}, {"$set": {"experience": experience_data}}
+    )
+    # Response
+    return BaseServerModel(status=200, message="Experience added successfully")
+
+
+async def add_qualifications(id: str, request: AddQualificationRequest):
+    # Check if the profile exists
+    profile = await db.profiles.find_one({"_id": ObjectId(id)})
+    # Throw exception if profile doesn't exist
+    if not profile:
+        raise CustomException(status_code=404, message="Profile not found")
+    # Handle the qualification data according to the database
+    qualification_data = [
+        {
+            "degree": qualification.degree,
+            "institution": qualification.institution,
+            "start_date": qualification.start_date,
+            "end_date": qualification.end_date,
+        }
+        for qualification in request.qualification
+    ]
+    # Check if the certificate exists in the request
+    certifications = request.certification or []
+    # Handle the certification data according to the database
+    certification_data = [
+        {
+            "course_name": certification.course_name,
+            "institution": certification.institution,
+            "start_date": certification.start_date,
+            "end_date": certification.end_date,
+        }
+        for certification in certifications
+    ]
+    # Add the qualification data to the profile
+    await db.profiles.update_one(
+        {"_id": ObjectId(id)},
+        {
+            "$set": {
+                "qualification": qualification_data,
+                "certification": certification_data,
+            }
+        },
     )
     # Response
     return BaseServerModel(status=200, message="Experience added successfully")
