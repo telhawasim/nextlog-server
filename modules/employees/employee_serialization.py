@@ -29,9 +29,7 @@ def employee_serialize(employee):
             else None
         ),
         "avatar": (
-            f"{BASE_URL}{employee["avatar"]}"
-            if "avatar" in employee and employee["avatar"]
-            else None
+            employee["avatar"] if "avatar" in employee and employee["avatar"] else None
         ),
         "profiles": [
             {
